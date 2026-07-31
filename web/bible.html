@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Библейская Викторина</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #6b2c91 0%, #4a1a6b 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            max-width: 500px;
+            width: 100%;
+            background: linear-gradient(180deg, #7b3fa0 0%, #5a2d82 100%);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            background: linear-gradient(180deg, #9b5fc0 0%, #7b3fa0 100%);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .pause-btn {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .pause-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .pause-btn::before,
+        .pause-btn::after {
+            content: '';
+            width: 6px;
+            height: 20px;
+            background: white;
+            border-radius: 3px;
+            margin: 0 3px;
+        }
+
+        .block-title {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .coins {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+        }
+
+        .coin-icon {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .coin-count {
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .progress-container {
+            background: linear-gradient(180deg, #8b4fb0 0%, #6b2f90 100%);
+            padding: 15px 20px;
+            text-align: center;
+        }
+
+        .progress-badge {
+            background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
+            color: white;
+            padding: 10px 30px;
+            border-radius: 25px;
+            display: inline-block;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .question-area {
+            background: linear-gradient(180deg, #3a5f8f 0%, #2a4a7f 100%);
+            padding: 40px 30px;
+            min-height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .question-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255, 255, 255, 0.05) 10px,
+                rgba(255, 255, 255, 0.05) 20px
+            );
+        }
+
+        .question-text {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .answers-area {
+            background: linear-gradient(180deg, #5a2d82 0%, #4a1d72 100%);
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .answer-btn {
+            background: linear-gradient(135deg, #4a90e2 0%, #2d6cb8 100%);
+            border: none;
+            padding: 20px 30px;
+            border-radius: 15px;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .answer-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .answer-btn:active {
+            transform: translateY(0);
+        }
+
+        .answer-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .answer-btn:hover::before {
+            left: 100%;
+        }
+
+        .answer-letter {
+            background: rgba(255, 255, 255, 0.3);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .answer-text {
+            flex: 1;
+            text-align: left;
+        }
+
+        .answer-btn.correct {
+            background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+            animation: correctPulse 0.6s;
+        }
+
+        .answer-btn.wrong {
+            background: linear-gradient(135deg, #f44336 0%, #c62828 100%);
+            animation: shake 0.5s;
+        }
+
+        @keyframes correctPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .footer {
+            background: linear-gradient(180deg, #ffb74d 0%, #ff9800 100%);
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, transparent 100%);
+        }
+
+        .footer-text {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            line-height: 1.4;
+        }
+
+        .result-screen {
+            display: none;
+            background: linear-gradient(180deg, #5a2d82 0%, #4a1d72 100%);
+            padding: 40px 20px;
+            text-align: center;
+            min-height: 400px;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .result-screen.active {
+            display: flex;
+        }
+
+        .result-title {
+            color: white;
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .result-score {
+            color: #ffd700;
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+            border: none;
+            padding: 20px 50px;
+            border-radius: 30px;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        @media (max-width: 480px) {
+            .question-text {
+                font-size: 20px;
+            }
+
+            .answer-btn {
+                font-size: 18px;
+                padding: 15px 20px;
+            }
+
+            .footer-text {
+                font-size: 24px;
+            }
+
+            .block-title {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <div class="pause-btn"></div>
+            <div class="block-title">Блок 1</div>
+            <div class="coins">
+                <div class="coin-icon">💎</div>
+                <div class="coin-count" id="coinCount">0</div>
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-badge">
+                Вопросы <span id="currentQuestion">1</span>/<span id="totalQuestions">5</span>
+            </div>
+        </div>
+
+        <div class="question-area" id="questionArea">
+            <div class="question-text" id="questionText">Загрузка вопроса...</div>
+        </div>
+
+        <div class="answers-area" id="answersArea">
+            <!-- Ответы будут добавлены через JavaScript -->
+        </div>
+
+        <div class="result-screen" id="resultScreen">
+            <div class="result-title">Викторина завершена!</div>
+            <div class="result-score" id="resultScore">0 очков</div>
+            <button class="restart-btn" onclick="restartGame()">Играть снова</button>
+        </div>
+
+         
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "Какая первая книга в Библии?",
+                answers: [
+                    { letter: "A", text: "Неемия", correct: false },
+                    { letter: "B", text: "Бытие", correct: true },
+                    { letter: "C", text: "Лука", correct: false },
+                    { letter: "D", text: "Енох", correct: false }
+                ]
+            },
+            {
+                question: "Кто был первым человеком на Земле?",
+                answers: [
+                    { letter: "A", text: "Ной", correct: false },
+                    { letter: "B", text: "Авраам", correct: false },
+                    { letter: "C", text: "Адам", correct: true },
+                    { letter: "D", text: "Моисей", correct: false }
+                ]
+            },
+            {
+                question: "Сколько дней Бог создавал мир?",
+                answers: [
+                    { letter: "A", text: "5 дней", correct: false },
+                    { letter: "B", text: "6 дней", correct: true },
+                    { letter: "C", text: "7 дней", correct: false },
+                    { letter: "D", text: "10 дней", correct: false }
+                ]
+            },
+            {
+                question: "Кто построил ковчег?",
+                answers: [
+                    { letter: "A", text: "Авраам", correct: false },
+                    { letter: "B", text: "Моисей", correct: false },
+                    { letter: "C", text: "Ной", correct: true },
+                    { letter: "D", text: "Давид", correct: false }
+                ]
+            },
+            {
+                question: "Сколько заповедей дал Бог Моисею?",
+                answers: [
+                    { letter: "A", text: "7 заповедей", correct: false },
+                    { letter: "B", text: "10 заповедей", correct: true },
+                    { letter: "C", text: "12 заповедей", correct: false },
+                    { letter: "D", text: "5 заповедей", correct: false }
+                ]
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answered = false;
+
+        function loadQuestion() {
+            answered = false;
+            const question = questions[currentQuestionIndex];
+            
+            document.getElementById('questionText').textContent = question.question;
+            document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+            document.getElementById('totalQuestions').textContent = questions.length;
+
+            const answersArea = document.getElementById('answersArea');
+            answersArea.innerHTML = '';
+
+            question.answers.forEach((answer, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'answer-btn';
+                btn.innerHTML = `
+                    <div class="answer-letter">${answer.letter}</div>
+                    <div class="answer-text">${answer.text}</div>
+                `;
+                btn.onclick = () => selectAnswer(index, btn);
+                answersArea.appendChild(btn);
+            });
+        }
+
+        function selectAnswer(index, btn) {
+            if (answered) return;
+            answered = true;
+
+            const question = questions[currentQuestionIndex];
+            const isCorrect = question.answers[index].correct;
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                score += 100;
+                document.getElementById('coinCount').textContent = score;
+            } else {
+                btn.classList.add('wrong');
+                // Показать правильный ответ
+                const buttons = document.querySelectorAll('.answer-btn');
+                question.answers.forEach((answer, i) => {
+                    if (answer.correct) {
+                        buttons[i].classList.add('correct');
+                    }
+                });
+            }
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < questions.length) {
+                    loadQuestion();
+                } else {
+                    showResult();
+                }
+            }, 1500);
+        }
+
+        function showResult() {
+            document.getElementById('questionArea').style.display = 'none';
+            document.getElementById('answersArea').style.display = 'none';
+            document.getElementById('footer').style.display = 'none';
+            document.querySelector('.progress-container').style.display = 'none';
+            
+            const resultScreen = document.getElementById('resultScreen');
+            resultScreen.classList.add('active');
+            document.getElementById('resultScore').textContent = score + ' очков';
+        }
+
+        function restartGame() {
+            currentQuestionIndex = 0;
+            score = 0;
+            document.getElementById('coinCount').textContent = score;
+            
+            document.getElementById('questionArea').style.display = 'flex';
+            document.getElementById('answersArea').style.display = 'flex';
+            document.getElementById('footer').style.display = 'block';
+            document.querySelector('.progress-container').style.display = 'block';
+            document.getElementById('resultScreen').classList.remove('active');
+            
+            loadQuestion();
+        }
+
+        // Инициализация игры
+        loadQuestion();
+    </script>
+</body>
+</html>
