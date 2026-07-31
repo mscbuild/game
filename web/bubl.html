@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Bubble Shooter</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fontsource-press-start-2p@5.0.8/index.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+  
+  body {
+    background: linear-gradient(135deg, #1a0033, #000428, #004e92);
+    font-family: 'Press Start 2P', cursive;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+    color: #fff;
+  }
+  
+  #game-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    height: 100vh;
+    max-height: 820px;
+    background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(138, 43, 226, 0.5);
+  }
+  
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+  }
+  
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    z-index: 10;
+    background: rgba(10, 5, 30, 0.92);
+    backdrop-filter: blur(8px);
+  }
+  
+  .hidden { display: none !important; }
+  
+  .title {
+    font-size: 32px;
+    text-align: center;
+    margin-bottom: 20px;
+    background: linear-gradient(90deg, #ff6ec7, #7873f5, #4ade80);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: glow 2.5s infinite;
+    line-height: 1.4;
+  }
+  
+  @keyframes glow {
+    0%, 100% { filter: drop-shadow(0 0 10px rgba(255,110,199,0.8)); }
+    50% { filter: drop-shadow(0 0 25px rgba(120,115,245,0.9)); }
+  }
+  
+  .subtitle {
+    font-size: 10px;
+    color: #4ade80;
+    margin-bottom: 30px;
+    letter-spacing: 3px;
+  }
+  
+  .btn {
+    background: linear-gradient(135deg, #ff6ec7, #7873f5);
+    color: white;
+    border: 2px solid #fff;
+    padding: 14px 36px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 50px;
+    margin: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(120,115,245,0.6);
+  }
+  
+  .btn:hover { transform: scale(1.05); box-shadow: 0 4px 30px rgba(255,110,199,0.8); }
+  .btn:active { transform: scale(0.95); }
+  
+  .btn-secondary {
+    background: linear-gradient(135deg, #4ade80, #22d3ee);
+  }
+  
+  .stats {
+    background: rgba(0,0,0,0.5);
+    padding: 18px 28px;
+    border-radius: 15px;
+    border: 1px solid #7873f5;
+    margin: 20px 0;
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 0;
+    font-size: 11px;
+  }
+  
+  .stat-label { color: #ff6ec7; }
+  .stat-value { color: #fff; }
+  
+  #hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 5;
+  }
+  
+  .hud-box {
+    background: rgba(0,0,0,0.6);
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid #7873f5;
+    backdrop-filter: blur(5px);
+  }
+  
+  .hud-label { color: #ff6ec7; font-size: 8px; margin-bottom: 4px; }
+  .hud-value { color: #fff; font-size: 13px; }
+  
+  .controls-hint {
+    font-size: 9px;
+    color: #aaa;
+    text-align: center;
+    margin-top: 25px;
+    line-height: 2;
+  }
+  
+  .final-score {
+    font-size: 28px;
+    color: #4ade80;
+    margin: 10px 0;
+    text-shadow: 0 0 20px #4ade80;
+  }
+  
+  .game-over-title {
+    font-size: 26px;
+    margin-bottom: 10px;
+  }
+  
+  @media (max-width: 400px) {
+    .title { font-size: 24px; }
+    .btn { font-size: 11px; padding: 12px 28px; }
+    .hud-value { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+<div id="game-wrapper">
+  <canvas id="game-canvas"></canvas>
+  
+  <div id="hud" class="hidden">
+    <div class="hud-box">
+      <div class="hud-label">SCORE</div>
+      <div class="hud-value" id="hud-score">0</div>
+    </div>
+    <div class="hud-box">
+      <div class="hud-label">SHOTS</div>
+      <div class="hud-value" id="hud-shots">0</div>
+    </div>
+    <div class="hud-box">
+      <div class="hud-label">LEVEL</div>
+      <div class="hud-value" id="hud-level">1</div>
+    </div>
+  </div>
+  
+  <div id="start-screen" class="screen">
+    <h1 class="title">BUBBLE<br>SHOOTER</h1>
+    <div class="subtitle">✨ POP THEM ALL ✨</div>
+    <button class="btn" id="start-btn">PLAY</button>
+    <div class="controls-hint">
+      Aim with mouse / touch<br>
+      Click / Tap to shoot<br>
+      Match 3+ same color to pop!
+    </div>
+  </div>
+  
+  <div id="game-over-screen" class="screen hidden">
+    <h1 class="title game-over-title" id="end-title">GAME OVER</h1>
+    <div class="final-score" id="final-score">0</div>
+    <div class="stats">
+      <div class="stat-row">
+        <span class="stat-label">HIGH SCORE</span>
+        <span class="stat-value" id="high-score">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">SHOTS USED</span>
+        <span class="stat-value" id="final-shots">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">LEVEL REACHED</span>
+        <span class="stat-value" id="final-level">1</span>
+      </div>
+    </div>
+    <button class="btn" id="restart-btn">PLAY AGAIN</button>
+    <button class="btn btn-secondary" id="menu-btn">MAIN MENU</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('game-canvas');
+  const ctx = canvas.getContext('2d');
+  const wrapper = document.getElementById('game-wrapper');
+  
+  const startScreen = document.getElementById('start-screen');
+  const gameOverScreen = document.getElementById('game-over-screen');
+  const hud = document.getElementById('hud');
+  const hudScore = document.getElementById('hud-score');
+  const hudShots = document.getElementById('hud-shots');
+  const hudLevel = document.getElementById('hud-level');
+  const finalScoreEl = document.getElementById('final-score');
+  const highScoreEl = document.getElementById('high-score');
+  const finalShotsEl = document.getElementById('final-shots');
+  const finalLevelEl = document.getElementById('final-level');
+  const endTitle = document.getElementById('end-title');
+  
+  // Audio
+  let audioCtx = null;
+  function initAudio() {
+    if (audioCtx) return;
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e) {}
+  }
+  
+  function playTone(freq, duration, type='sine', vol=0.15, freqEnd=null) {
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    if (freqEnd) osc.frequency.exponentialRampToValueAtTime(freqEnd, audioCtx.currentTime + duration);
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  }
+  
+  const sfx = {
+    shoot: () => playTone(400, 0.1, 'square', 0.1, 600),
+    pop: (pitch=1) => {
+      playTone(600 * pitch, 0.12, 'sine', 0.15, 200 * pitch);
+      setTimeout(() => playTone(900 * pitch, 0.08, 'sine', 0.1), 40);
+    },
+    bounce: () => playTone(300, 0.05, 'square', 0.08),
+    stick: () => playTone(200, 0.08, 'triangle', 0.1),
+    drop: () => playTone(800, 0.3, 'sine', 0.12, 100),
+    gameOver: () => {
+      [400, 300, 200, 100].forEach((f, i) => setTimeout(() => playTone(f, 0.3, 'sawtooth', 0.15), i * 150));
+    },
+    levelUp: () => {
+      [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 0.15, 'square', 0.12), i * 80));
+    }
+  };
+  
+  // Game constants
+  const COLORS = [
+    { main: '#ff4d6d', light: '#ff8fa3', dark: '#c9184a' },
+    { main: '#4cc9f0', light: '#a0e7ff', dark: '#0077b6' },
+    { main: '#ffd60a', light: '#fff3b0', dark: '#b8860b' },
+    { main: '#7bed9f', light: '#b8f5c9', dark: '#2d8659' },
+    { main: '#b983ff', light: '#d4b3ff', dark: '#6a3db3' },
+    { main: '#ff9f43', light: '#ffc88a', dark: '#c76b00' }
+  ];
+  
+  let W = 0, H = 0;
+  let dpr = window.devicePixelRatio || 1;
+  let radius = 20;
+  let cols = 10;
+  let rowHeight = 0;
+  
+  let state = 'menu';
+  let grid = []; // 2D array, grid[row][col] = color index or -1
+  let maxRows = 0;
+  let score = 0;
+  let shots = 0;
+  let level = 1;
+  let highScore = parseInt(localStorage.getItem('bubbleShooterHigh') || '0');
+  
+  let shooter = { x: 0, y: 0 };
+  let currentBubble = null;
+  let nextBubble = null;
+  let flyingBubble = null;
+  let aimAngle = -Math.PI / 2;
+  
+  let fallingBubbles = [];
+  let particles = [];
+  let popAnimations = [];
+  
+  let mouseX = 0, mouseY = 0;
+  let dangerLine = 0;
+  
+  function resize() {
+    const rect = wrapper.getBoundingClientRect();
+    W = rect.width;
+    H = rect.height;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    
+    // Adjust bubble size based on width
+    radius = Math.min(22, (W - 20) / (cols * 2 + 1));
+    rowHeight = radius * Math.sqrt(3);
+    
+    shooter.x = W / 2;
+    shooter.y = H - 80;
+    dangerLine = H - 140;
+    
+    if (currentBubble) {
+      currentBubble.x = shooter.x;
+      currentBubble.y = shooter.y;
+    }
+  }
+  
+  window.addEventListener('resize', resize);
+  resize();
+  
+  // Grid helpers
+  function getRowOffset(row) {
+    return (row % 2 === 1) ? radius : 0;
+  }
+  
+  function getBubblePos(row, col) {
+    const x = radius + col * (radius * 2) + getRowOffset(row);
+    const y = radius + 20 + row * rowHeight;
+    return { x, y };
+  }
+  
+  function getMaxCols(row) {
+    return (row % 2 === 1) ? cols - 1 : cols;
+  }
+  
+  function initGrid() {
+    grid = [];
+    const startRows = 5 + Math.min(level - 1, 4);
+    maxRows = Math.floor((dangerLine - 20) / rowHeight);
+    
+    for (let r = 0; r < maxRows; r++) {
+      const row = [];
+      const maxC = getMaxCols(r);
+      for (let c = 0; c < maxC; c++) {
+        if (r < startRows) {
+          // Use fewer colors in lower levels
+          const numColors = Math.min(3 + Math.floor(level / 2), COLORS.length);
+          row.push(Math.floor(Math.random() * numColors));
+        } else {
+          row.push(-1);
+        }
+      }
+      grid.push(row);
+    }
+  }
+  
+  function randomColor() {
+    // Only pick colors that exist in grid
+    const present = new Set();
+    for (let r = 0; r < grid.length; r++) {
+      for (let c = 0; c < grid[r].length; c++) {
+        if (grid[r][c] >= 0) present.add(grid[r][c]);
+      }
+    }
+    if (present.size === 0) return Math.floor(Math.random() * 3);
+    const arr = Array.from(present);
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+  
+  function createBubble(color) {
+    return {
+      x: shooter.x,
+      y: shooter.y,
+      color: color,
+      vx: 0,
+      vy: 0
+    };
+  }
+  
+  function prepareNext() {
+    currentBubble = nextBubble || createBubble(randomColor());
+    currentBubble.x = shooter.x;
+    currentBubble.y = shooter.y;
+    currentBubble.vx = 0;
+    currentBubble.vy = 0;
+    nextBubble = createBubble(randomColor());
+  }
+  
+  // Find nearest grid cell for a position
+  function findNearestCell(x, y) {
+    const row = Math.round((y - 20 - radius) / rowHeight);
+    const r = Math.max(0, Math.min(maxRows - 1, row));
+    const offset = getRowOffset(r);
+    const col = Math.round((x - radius - offset) / (radius * 2));
+    const maxC = getMaxCols(r);
+    const c = Math.max(0, Math.min(maxC - 1, col));
+    return { row: r, col: c };
+  }
+  
+  // Get neighbors in hex grid
+  function getNeighbors(row, col) {
+    const neighbors = [];
+    const isOdd = row % 2 === 1;
+    const dirs = isOdd ?
+      [[-1, 0], [-1, 1], [0, -1], [0, 1], [1, 0], [1, 1]] :
+      [[-1, -1], [-1, 0], [0, -1], [0, 1], [1, -1], [1, 0]];
+    
+    for (const [dr, dc] of dirs) {
+      const nr = row + dr;
+      const nc = col + dc;
+      if (nr >= 0 && nr < grid.length && nc >= 0 && nc < getMaxCols(nr)) {
+        neighbors.push({ row: nr, col: nc });
+      }
+    }
+    return neighbors;
+  }
+  
+  // BFS to find connected same-color bubbles
+  function findConnected(row, col, color) {
+    const visited = new Set();
+    const result = [];
+    const queue = [{ row, col }];
+    visited.add(`${row},${col}`);
+    
+    while (queue.length > 0) {
+      const { row: r, col: c } = queue.shift();
+      if (grid[r][c] !== color) continue;
+      result.push({ row: r, col: c });
+      
+      for (const n of getNeighbors(r, c)) {
+        const key = `${n.row},${n.col}`;
+        if (!visited.has(key) && grid[n.row][n.col] === color) {
+          visited.add(key);
+          queue.push(n);
+        }
+      }
+    }
+    return result;
+  }
+  
+  // Find floating bubbles (not connected to top)
+  function findFloating() {
+    const attached = new Set();
+    const queue = [];
+    
+    // Start from top row
+    for (let c = 0; c < grid[0].length; c++) {
+      if (grid[0][c] >= 0) {
+        queue.push({ row: 0, col: c });
+        attached.add(`0,${c}`);
+      }
+    }
+    
+    while (queue.length > 0) {
+      const { row, col } = queue.shift();
+      for (const n of getNeighbors(row, col)) {
+        const key = `${n.row},${n.col}`;
+        if (!attached.has(key) && grid[n.row][n.col] >= 0) {
+          attached.add(key);
+          queue.push(n);
+        }
+      }
+    }
+    
+    const floating = [];
+    for (let r = 0; r < grid.length; r++) {
+      for (let c = 0; c < grid[r].length; c++) {
+        if (grid[r][c] >= 0 && !attached.has(`${r},${c}`)) {
+          floating.push({ row: r, col: c, color: grid[r][c] });
+          grid[r][c] = -1;
+        }
+      }
+    }
+    return floating;
+  }
+  
+  function snapBubble(bubble) {
+    const { row, col } = findNearestCell(bubble.x, bubble.y);
+    if (grid[row][col] >= 0) {
+      // Cell occupied, find nearest empty neighbor
+      let best = null;
+      let bestDist = Infinity;
+      for (const n of getNeighbors(row, col)) {
+        if (grid[n.row][n.col] < 0) {
+          const pos = getBubblePos(n.row, n.col);
+          const d = Math.hypot(pos.x - bubble.x, pos.y - bubble.y);
+          if (d < bestDist) {
+            bestDist = d;
+            best = n;
+          }
+        }
+      }
+      // Also check neighbors of original cell
+      if (!best) {
+        for (const n of getNeighbors(row, col)) {
+          if (grid[n.row][n.col] < 0) {
+            best = n;
+            break;
+          }
+        }
+      }
+      if (best) {
+        grid[best.row][best.col] = bubble.color;
+        const pos = getBubblePos(best.row, best.col);
+        bubble.x = pos.x;
+        bubble.y = pos.y;
+        return { row: best.row, col: best.col };
+      }
+      return null;
+    }
+    
+    grid[row][col] = bubble.color;
+    const pos = getBubblePos(row, col);
+    bubble.x = pos.x;
+    bubble.y = pos.y;
+    return { row, col };
+  }
+  
+  function shoot() {
+    if (!currentBubble || flyingBubble) return;
+    sfx.shoot();
+    const speed = 14;
+    flyingBubble = {
+      x: currentBubble.x,
+      y: currentBubble.y,
+      color: currentBubble.color,
+      vx: Math.cos(aimAngle) * speed,
+      vy: Math.sin(aimAngle) * speed
+    };
+    shots++;
+    currentBubble = null;
+  }
+  
+  function handleCollision() {
+    if (!flyingBubble) return;
+    
+    const snapped = snapBubble(flyingBubble);
+    sfx.stick();
+    flyingBubble = null;
+    
+    if (!snapped) {
+      prepareNext();
+      return;
+    }
+    
+    // Find connected same color
+    const connected = findConnected(snapped.row, snapped.col, grid[snapped.row][snapped.col]);
+    
+    if (connected.length >= 3) {
+      // Pop them
+      const color = grid[connected[0].row][connected[0].col];
+      for (const cell of connected) {
+        const pos = getBubblePos(cell.row, cell.col);
+        createPopEffect(pos.x, pos.y, color);
+        grid[cell.row][cell.col] = -1;
+      }
+      score += connected.length * 10;
+      sfx.pop(1 + connected.length * 0.1);
+      
+      // Find and drop floating
+      setTimeout(() => {
+        const floating = findFloating();
+        if (floating.length > 0) {
+          for (const f of floating) {
+            const pos = getBubblePos(f.row, f.col);
+            fallingBubbles.push({
+              x: pos.x, y: pos.y,
+              color: f.color,
+              vx: (Math.random() - 0.5) * 3,
+              vy: -2,
+              rot: 0,
+              vrot: (Math.random() - 0.5) * 0.2
+            });
+          }
+          score += floating.length * 20;
+          sfx.drop();
+        }
+        
+        // Check win
+        if (isGridEmpty()) {
+          level++;
+          sfx.levelUp();
+          setTimeout(() => {
+            initGrid();
+            prepareNext();
+          }, 800);
+        }
+      }, 50);
+    }
+    
+    prepareNext();
+    checkGameOver();
+  }
+  
+  function isGridEmpty() {
+    for (let r = 0; r < grid.length; r++) {
+      for (let c = 0; c < grid[r].length; c++) {
+        if (grid[r][c] >= 0) return false;
+      }
+    }
+    return true;
+  }
+  
+  function checkGameOver() {
+    // Check if any bubble in bottom row
+    const bottomRow = grid.length - 1;
+    for (let c = 0; c < grid[bottomRow].length; c++) {
+      if (grid[bottomRow][c] >= 0) {
+        endGame(false);
+        return;
+      }
+    }
+    // Check if any bubble below danger line
+    for (let r = 0; r < grid.length; r++) {
+      for (let c = 0; c < grid[r].length; c++) {
+        if (grid[r][c] >= 0) {
+          const pos = getBubblePos(r, c);
+          if (pos.y + radius > dangerLine) {
+            endGame(false);
+            return;
+          }
+        }
+      }
+    }
+  }
+  
+  function createPopEffect(x, y, colorIdx) {
+    const color = COLORS[colorIdx];
+    for (let i = 0; i < 10; i++) {
+      const angle = (Math.PI * 2 * i) / 10;
+      const speed = 2 + Math.random() * 3;
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 30,
+        maxLife: 30,
+        color: color.main,
+        size: 3 + Math.random() * 3
+      });
+    }
+    popAnimations.push({ x, y, radius: radius, life: 15, color: color.light });
+  }
+  
+  function update() {
+    if (state !== 'playing') return;
+    
+    // Update flying bubble
+    if (flyingBubble) {
+      flyingBubble.x += flyingBubble.vx;
+      flyingBubble.y += flyingBubble.vy;
+      
+      // Wall bounce
+      if (flyingBubble.x - radius < 0) {
+        flyingBubble.x = radius;
+        flyingBubble.vx *= -1;
+        sfx.bounce();
+      } else if (flyingBubble.x + radius > W) {
+        flyingBubble.x = W - radius;
+        flyingBubble.vx *= -1;
+        sfx.bounce();
+      }
+      
+      // Top wall
+      if (flyingBubble.y - radius < 20) {
+        flyingBubble.y = 20 + radius;
+        handleCollision();
+        return;
+      }
+      
+      // Collision with grid bubbles
+      for (let r = 0; r < grid.length; r++) {
+        for (let c = 0; c < grid[r].length; c++) {
+          if (grid[r][c] >= 0) {
+            const pos = getBubblePos(r, c);
+            const d = Math.hypot(pos.x - flyingBubble.x, pos.y - flyingBubble.y);
+            if (d < radius * 2 - 2) {
+              handleCollision();
+              return;
+            }
+          }
+        }
+      }
+    }
+    
+    // Update falling bubbles
+    for (let i = fallingBubbles.length - 1; i >= 0; i--) {
+      const b = fallingBubbles[i];
+      b.vy += 0.5;
+      b.x += b.vx;
+      b.y += b.vy;
+      b.rot += b.vrot;
+      if (b.y > H + 50) fallingBubbles.splice(i, 1);
+    }
+    
+    // Update particles
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.2;
+      p.life--;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+    
+    // Update pop animations
+    for (let i = popAnimations.length - 1; i >= 0; i--) {
+      popAnimations[i].life--;
+      popAnimations[i].radius += 2;
+      if (popAnimations[i].life <= 0) popAnimations.splice(i, 1);
+    }
+    
+    // Update HUD
+    hudScore.textContent = score;
+    hudShots.textContent = shots;
+    hudLevel.textContent = level;
+  }
+  
+  function drawBubble(x, y, colorIdx, scale=1) {
+    const color = COLORS[colorIdx];
+    const r = radius * scale;
+    
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.arc(x + 2, y + 3, r, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Main gradient
+    const grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
+    grad.addColorStop(0, color.light);
+    grad.addColorStop(0.6, color.main);
+    grad.addColorStop(1, color.dark);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Shine
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(x - r * 0.35, y - r * 0.35, r * 0.25, r * 0.15, -0.5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Border
+    ctx.strokeStyle = color.dark;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  
+  function drawAimLine() {
+    if (!currentBubble || flyingBubble) return;
+    
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 8]);
+    
+    // Trace path with bounces
+    let x = shooter.x;
+    let y = shooter.y;
+    let vx = Math.cos(aimAngle);
+    let vy = Math.sin(aimAngle);
+    
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    
+    for (let step = 0; step < 300; step++) {
+      x += vx * 5;
+      y += vy * 5;
+      
+      if (x < radius) { x = radius; vx *= -1; }
+      if (x > W - radius) { x = W - radius; vx *= -1; }
+      if (y < 20) break;
+      
+      // Check collision with grid
+      let hit = false;
+      for (let r = 0; r < grid.length && !hit; r++) {
+        for (let c = 0; c < grid[r].length && !hit; c++) {
+          if (grid[r][c] >= 0) {
+            const pos = getBubblePos(r, c);
+            if (Math.hypot(pos.x - x, pos.y - y) < radius * 2 - 2) {
+              hit = true;
+            }
+          }
+        }
+      }
+      if (hit) break;
+      
+      ctx.lineTo(x, y);
+    }
+    
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  
+  function draw() {
+    // Background
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#0f0c29');
+    bgGrad.addColorStop(0.5, '#302b63');
+    bgGrad.addColorStop(1, '#24243e');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+    
+    // Decorative stars
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    for (let i = 0; i < 30; i++) {
+      const sx = (i * 137.5) % W;
+      const sy = (i * 89.3) % H;
+      ctx.fillRect(sx, sy, 1.5, 1.5);
+    }
+    
+    // Top bar
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(0, 0, W, 20);
+    
+    // Danger line
+    ctx.strokeStyle = 'rgba(255, 50, 50, 0.5)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([10, 5]);
+    ctx.beginPath();
+    ctx.moveTo(0, dangerLine);
+    ctx.lineTo(W, dangerLine);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Grid bubbles
+    for (let r = 0; r < grid.length; r++) {
+      for (let c = 0; c < grid[r].length; c++) {
+        if (grid[r][c] >= 0) {
+          const pos = getBubblePos(r, c);
+          drawBubble(pos.x, pos.y, grid[r][c]);
+        }
+      }
+    }
+    
+    // Pop animations
+    for (const p of popAnimations) {
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth = 3;
+      ctx.globalAlpha = p.life / 15;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    
+    // Particles
+    for (const p of particles) {
+      ctx.globalAlpha = p.life / p.maxLife;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    
+    // Falling bubbles
+    for (const b of fallingBubbles) {
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.rotate(b.rot);
+      drawBubble(0, 0, b.color);
+      ctx.restore();
+    }
+    
+    // Aim line
+    drawAimLine();
+    
+    // Flying bubble
+    if (flyingBubble) {
+      drawBubble(flyingBubble.x, flyingBubble.y, flyingBubble.color);
+    }
+    
+    // Shooter area
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(0, H - 120, W, 120);
+    
+    // Shooter base
+    ctx.fillStyle = '#7873f5';
+    ctx.shadowColor = '#7873f5';
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.arc(shooter.x, shooter.y + 20, 25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    // Cannon
+    ctx.save();
+    ctx.translate(shooter.x, shooter.y);
+    ctx.rotate(aimAngle + Math.PI / 2);
+    ctx.fillStyle = '#4a4599';
+    ctx.fillRect(-8, -40, 16, 40);
+    ctx.fillStyle = '#7873f5';
+    ctx.fillRect(-10, -45, 20, 8);
+    ctx.restore();
+    
+    // Current bubble
+    if (currentBubble) {
+      drawBubble(currentBubble.x, currentBubble.y, currentBubble.color);
+    }
+    
+    // Next bubble preview
+    if (nextBubble) {
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.font = '8px "Press Start 2P"';
+      ctx.textAlign = 'center';
+      ctx.fillText('NEXT', 50, H - 95);
+      drawBubble(50, H - 70, nextBubble.color, 0.7);
+    }
+  }
+  
+  function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+  
+  function startGame() {
+    initAudio();
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    
+    state = 'playing';
+    score = 0;
+    shots = 0;
+    level = 1;
+    fallingBubbles = [];
+    particles = [];
+    popAnimations = [];
+    flyingBubble = null;
+    
+    initGrid();
+    prepareNext();
+    
+    startScreen.classList.add('hidden');
+    gameOverScreen.classList.add('hidden');
+    hud.classList.remove('hidden');
+  }
+  
+  function endGame(won) {
+    state = 'over';
+    if (score > highScore) {
+      highScore = score;
+      localStorage.setItem('bubbleShooterHigh', highScore);
+    }
+    
+    finalScoreEl.textContent = score;
+    highScoreEl.textContent = highScore;
+    finalShotsEl.textContent = shots;
+    finalLevelEl.textContent = level;
+    endTitle.textContent = won ? 'YOU WIN!' : 'GAME OVER';
+    
+    hud.classList.add('hidden');
+    gameOverScreen.classList.remove('hidden');
+    
+    if (!won) sfx.gameOver();
+    else sfx.levelUp();
+  }
+  
+  function goToMenu() {
+    state = 'menu';
+    gameOverScreen.classList.add('hidden');
+    startScreen.classList.remove('hidden');
+    hud.classList.add('hidden');
+  }
+  
+  // Input handling
+  function updateAim(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = clientX - rect.left;
+    mouseY = clientY - rect.top;
+    
+    const dx = mouseX - shooter.x;
+    const dy = mouseY - shooter.y;
+    let angle = Math.atan2(dy, dx);
+    
+    // Clamp to upward angles
+    if (angle > -0.15) angle = -0.15;
+    if (angle < -Math.PI + 0.15) angle = -Math.PI + 0.15;
+    
+    aimAngle = angle;
+  }
+  
+  canvas.addEventListener('mousemove', e => {
+    if (state === 'playing') updateAim(e.clientX, e.clientY);
+  });
+  
+  canvas.addEventListener('click', e => {
+    if (state === 'playing') {
+      updateAim(e.clientX, e.clientY);
+      shoot();
+    }
+  });
+  
+  canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    if (state === 'playing' && e.touches[0]) {
+      updateAim(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, { passive: false });
+  
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (state === 'playing' && e.touches[0]) {
+      updateAim(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, { passive: false });
+  
+  canvas.addEventListener('touchend', e => {
+    e.preventDefault();
+    if (state === 'playing') shoot();
+  }, { passive: false });
+  
+  document.getElementById('start-btn').addEventListener('click', startGame);
+  document.getElementById('restart-btn').addEventListener('click', startGame);
+  document.getElementById('menu-btn').addEventListener('click', goToMenu);
+  
+  loop();
+})();
+</script>
+</body>
+</html>
