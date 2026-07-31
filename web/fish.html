@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎣 Deep Sea Fishing</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-900-normal.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #87ceeb 0%, #4a90e2 30%, #1e3a5f 60%, #0a1628 100%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    overflow: hidden;
+    position: relative;
+  }
+  .title {
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: 900;
+    text-align: center;
+    background: linear-gradient(180deg, #ffd700 0%, #ff8c00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 3px;
+    margin: 10px 0;
+    text-shadow: 0 0 20px rgba(255,215,0,0.5);
+    animation: titleGlow 2s ease-in-out infinite alternate;
+    z-index: 10;
+  }
+  @keyframes titleGlow {
+    from { filter: drop-shadow(0 0 10px rgba(255,215,0,0.5)); }
+    to { filter: drop-shadow(0 0 25px rgba(255,215,0,0.9)); }
+  }
+  .game-container {
+    width: 100%;
+    max-width: 800px;
+    position: relative;
+    z-index: 10;
+  }
+  .stats-bar {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .stat-box {
+    flex: 1;
+    min-width: 100px;
+    background: linear-gradient(145deg, rgba(0,50,100,0.8) 0%, rgba(0,30,60,0.9) 100%);
+    border: 2px solid #ffd700;
+    border-radius: 10px;
+    padding: 8px 12px;
+    text-align: center;
+    box-shadow: 0 0 15px rgba(255,215,0,0.3), inset 0 0 20px rgba(0,0,0,0.5);
+  }
+  .stat-label {
+    font-size: 0.7rem;
+    color: #ffd700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .stat-value {
+    font-size: clamp(1rem, 2.5vw, 1.4rem);
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255,255,255,0.5);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-value.money { color: #00ff88; text-shadow: 0 0 15px rgba(0,255,136,0.8); }
+  .canvas-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: linear-gradient(180deg, #87ceeb 0%, #4a90e2 15%, #1e3a5f 50%, #0a1628 100%);
+    border: 4px solid #ffd700;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 0 40px rgba(255,215,0,0.4), 0 20px 60px rgba(0,0,0,0.6);
+    cursor: pointer;
+  }
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .controls {
+    margin-top: 15px;
+    background: linear-gradient(145deg, rgba(0,50,100,0.8) 0%, rgba(0,30,60,0.9) 100%);
+    border: 3px solid #ffd700;
+    border-radius: 16px;
+    padding: 15px;
+    box-shadow: 0 0 30px rgba(255,215,0,0.3), 0 10px 40px rgba(0,0,0,0.5);
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 12px 24px;
+    border: 2px solid #ffd700;
+    border-radius: 10px;
+    background: linear-gradient(145deg, #4a4a6a 0%, #2a2a4a 100%);
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(0.8rem, 2vw, 1rem);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 0 #1a1a2a, 0 6px 12px rgba(0,0,0,0.4);
+    transition: all 0.15s;
+  }
+  .btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #1a1a2a, 0 8px 16px rgba(0,0,0,0.5);
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #1a1a2a;
+  }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary {
+    background: linear-gradient(145deg, #00ff88 0%, #00aa55 100%);
+    color: #000;
+  }
+  .btn-danger {
+    background: linear-gradient(145deg, #ff4444 0%, #cc0000 100%);
+  }
+  .message {
+    text-align: center;
+    min-height: 30px;
+    font-weight: 900;
+    font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+    color: #ffd700;
+    text-shadow: 0 0 15px rgba(255,215,0,0.8);
+    margin-top: 10px;
+    letter-spacing: 1px;
+  }
+  .message.big-win {
+    color: #00ff88;
+    text-shadow: 0 0 25px rgba(0,255,136,0.9);
+    animation: bigWin 0.4s ease-in-out infinite alternate;
+  }
+  @keyframes bigWin {
+    from { transform: scale(1); }
+    to { transform: scale(1.1); }
+  }
+  .sound-toggle {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.6);
+    border: 2px solid #ffd700;
+    color: #ffd700;
+    font-size: 1.2rem;
+    cursor: pointer;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+  }
+  .sound-toggle.muted { opacity: 0.5; }
+  .instructions {
+    text-align: center;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.7);
+    margin-top: 8px;
+    letter-spacing: 1px;
+  }
+  @media (max-width: 600px) {
+    .canvas-wrap { aspect-ratio: 3/4; }
+    .btn { padding: 10px 16px; font-size: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+<button class="sound-toggle" id="soundToggle" aria-label="Toggle sound"></button>
+<h1 class="title">🎣 DEEP SEA FISHING </h1>
+
+<div class="game-container">
+  <div class="stats-bar">
+    <div class="stat-box">
+      <div class="stat-label">Money</div>
+      <div class="stat-value money" id="money">$0</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Casts</div>
+      <div class="stat-value" id="casts">10</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Caught</div>
+      <div class="stat-value" id="caught">0</div>
+    </div>
+  </div>
+
+  <div class="canvas-wrap" id="canvasWrap">
+    <canvas id="gameCanvas"></canvas>
+  </div>
+
+  <div class="message" id="message">Move hook with ← → or mouse. Press SPACE or click to drop!</div>
+  <div class="instructions">🎮 Arrow keys / Mouse to move | Space / Click to drop hook</div>
+
+  <div class="controls">
+    <button class="btn btn-primary" id="dropBtn">Drop Hook</button>
+    <button class="btn" id="resetBtn">New Game</button>
+  </div>
+</div>
+
+<script>
+// ============== SOUND ENGINE ==============
+class SoundEngine {
+  constructor() {
+    this.ctx = null;
+    this.masterGain = null;
+    this.muted = false;
+    this.initialized = false;
+  }
+  init() {
+    if (this.initialized) return;
+    try {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      this.masterGain = this.ctx.createGain();
+      this.masterGain.gain.value = 0.5;
+      this.masterGain.connect(this.ctx.destination);
+      this.initialized = true;
+    } catch (e) {}
+  }
+  resume() {
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  }
+  setMuted(m) {
+    this.muted = m;
+    if (this.masterGain) this.masterGain.gain.value = m ? 0 : 0.5;
+  }
+  createNoiseBuffer(duration = 1) {
+    const sr = this.ctx.sampleRate;
+    const len = sr * duration;
+    const buf = this.ctx.createBuffer(1, len, sr);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    return buf;
+  }
+  tone(freq, duration, type = 'sine', volume = 0.3, startTime = 0) {
+    if (!this.initialized) return;
+    const t = this.ctx.currentTime + startTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(volume, t + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(t);
+    osc.stop(t + duration + 0.05);
+  }
+  noiseBurst(duration, filterFreq, filterType = 'bandpass', volume = 0.2, startTime = 0) {
+    if (!this.initialized) return;
+    const t = this.ctx.currentTime + startTime;
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = this.createNoiseBuffer(duration);
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = filterType;
+    filter.frequency.value = filterFreq;
+    filter.Q.value = 1;
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(volume, t + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+    noise.start(t);
+    noise.stop(t + duration);
+  }
+  splash() {
+    if (!this.initialized) return;
+    this.noiseBurst(0.4, 1000, 'bandpass', 0.3);
+    this.tone(300, 0.3, 'sine', 0.2, 0.05);
+    this.tone(200, 0.4, 'triangle', 0.15, 0.1);
+  }
+  bubble() {
+    if (!this.initialized) return;
+    const freq = 400 + Math.random() * 400;
+    this.tone(freq, 0.1, 'sine', 0.1);
+  }
+  fishCaught(size = 'small') {
+    if (!this.initialized) return;
+    if (size === 'small') {
+      this.tone(600, 0.1, 'sine', 0.2);
+      this.tone(800, 0.15, 'sine', 0.15, 0.05);
+    } else if (size === 'medium') {
+      const notes = [500, 700, 900];
+      notes.forEach((f, i) => this.tone(f, 0.12, 'triangle', 0.2, i * 0.08));
+    } else if (size === 'large') {
+      const notes = [400, 600, 800, 1000];
+      notes.forEach((f, i) => this.tone(f, 0.15, 'triangle', 0.25, i * 0.1));
+      this.noiseBurst(0.2, 2000, 'highpass', 0.15, 0.4);
+    } else if (size === 'rare') {
+      const notes = [523, 659, 784, 1047, 1319];
+      notes.forEach((f, i) => {
+        this.tone(f, 0.2, 'triangle', 0.3, i * 0.1);
+        this.tone(f * 1.5, 0.2, 'sine', 0.15, i * 0.1 + 0.05);
+      });
+      this.noiseBurst(0.3, 3000, 'highpass', 0.2, 0.5);
+    }
+  }
+  reelIn() {
+    if (!this.initialized) return;
+    this.noiseBurst(0.3, 500, 'lowpass', 0.15);
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(100, t);
+    osc.frequency.exponentialRampToValueAtTime(300, t + 0.4);
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.1, t + 0.1);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(t);
+    osc.stop(t + 0.6);
+  }
+  gameOver() {
+    if (!this.initialized) return;
+    const notes = [400, 350, 300, 250];
+    notes.forEach((f, i) => this.tone(f, 0.3, 'triangle', 0.2, i * 0.2));
+  }
+  click() {
+    if (!this.initialized) return;
+    this.tone(1200, 0.05, 'sine', 0.2);
+    this.noiseBurst(0.03, 4000, 'highpass', 0.1, 0.01);
+  }
+}
+const sound = new SoundEngine();
+
+// ============== GAME LOGIC ==============
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let W, H;
+function resizeCanvas() {
+  const wrap = document.getElementById('canvasWrap');
+  const rect = wrap.getBoundingClientRect();
+  canvas.width = rect.width * window.devicePixelRatio;
+  canvas.height = rect.height * window.devicePixelRatio;
+  ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+  W = rect.width;
+  H = rect.height;
+}
+
+// Game state
+let money = 0;
+let casts = 10;
+let caught = 0;
+let hook = { x: 0, y: 0, state: 'idle', speed: 0, caughtFish: null };
+let fishes = [];
+let bubbles = [];
+let particles = [];
+let seaweed = [];
+let lastTime = 0;
+let gameTime = 0;
+
+// Fish types
+const FISH_TYPES = [
+  { name: 'Small Fish', icon: '🐟', value: 10, speed: 2, size: 20, depth: [0.3, 0.6], color: '#ff6b6b', rarity: 0.4 },
+  { name: 'Medium Fish', icon: '🐠', value: 25, speed: 1.5, size: 28, depth: [0.4, 0.7], color: '#4ecdc4', rarity: 0.3 },
+  { name: 'Large Fish', icon: '', value: 50, speed: 1, size: 35, depth: [0.5, 0.85], color: '#95e1d3', rarity: 0.2 },
+  { name: 'Rare Fish', icon: '🐡', value: 100, speed: 0.8, size: 30, depth: [0.7, 0.95], color: '#ffd93d', rarity: 0.08 },
+  { name: 'Legendary', icon: '🐙', value: 250, speed: 0.5, size: 40, depth: [0.85, 0.98], color: '#ff6b9d', rarity: 0.02 }
+];
+
+function initGame() {
+  resizeCanvas();
+  hook.x = W / 2;
+  hook.y = H * 0.15;
+  hook.state = 'idle';
+  hook.speed = 0;
+  hook.caughtFish = null;
+  fishes = [];
+  bubbles = [];
+  particles = [];
+  seaweed = [];
+  
+  // Create seaweed
+  for (let i = 0; i < 8; i++) {
+    seaweed.push({
+      x: Math.random() * W,
+      height: 30 + Math.random() * 50,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+  
+  // Spawn initial fish
+  for (let i = 0; i < 15; i++) {
+    spawnFish();
+  }
+  
+  updateDisplay();
+}
+
+function spawnFish() {
+  const rand = Math.random();
+  let cumulative = 0;
+  let type = FISH_TYPES[0];
+  for (const t of FISH_TYPES) {
+    cumulative += t.rarity;
+    if (rand <= cumulative) {
+      type = t;
+      break;
+    }
+  }
+  
+  const depth = type.depth[0] + Math.random() * (type.depth[1] - type.depth[0]);
+  const y = H * depth;
+  const direction = Math.random() > 0.5 ? 1 : -1;
+  const x = direction > 0 ? -50 : W + 50;
+  
+  fishes.push({
+    x, y, type,
+    speed: type.speed * (0.8 + Math.random() * 0.4),
+    direction,
+    wobble: Math.random() * Math.PI * 2,
+    caught: false
+  });
+}
+
+function update(dt) {
+  gameTime += dt;
+  
+  // Update hook
+  if (hook.state === 'dropping') {
+    hook.y += hook.speed * dt * 60;
+    hook.speed += 0.1;
+    
+    // Check fish collision
+    for (const fish of fishes) {
+      if (fish.caught) continue;
+      const dx = hook.x - fish.x;
+      const dy = hook.y - fish.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < fish.type.size + 10) {
+        fish.caught = true;
+        hook.caughtFish = fish;
+        hook.state = 'reeling';
+        hook.speed = 0;
+        sound.fishCaught(fish.type.name === 'Legendary' ? 'rare' : fish.type.name === 'Large Fish' ? 'large' : fish.type.name === 'Medium Fish' ? 'medium' : 'small');
+        break;
+      }
+    }
+    
+    // Hit bottom
+    if (hook.y > H * 0.98) {
+      hook.state = 'reeling';
+      hook.speed = 0;
+    }
+    
+    // Bubbles while dropping
+    if (Math.random() < 0.3) {
+      bubbles.push({
+        x: hook.x + (Math.random() - 0.5) * 10,
+        y: hook.y,
+        size: 2 + Math.random() * 4,
+        speed: 1 + Math.random() * 2,
+        life: 1
+      });
+    }
+  } else if (hook.state === 'reeling') {
+    hook.y -= 3 * dt * 60;
+    sound.reelIn();
+    
+    if (hook.y <= H * 0.15) {
+      hook.y = H * 0.15;
+      hook.state = 'idle';
+      if (hook.caughtFish) {
+        money += hook.caughtFish.type.value;
+        caught++;
+        casts--;
+        createCatchParticles(hook.x, hook.y, hook.caughtFish.type);
+        setMessage(`Caught ${hook.caughtFish.type.icon} ${hook.caughtFish.type.name}! +$${hook.caughtFish.type.value}`, true);
+        hook.caughtFish = null;
+        updateDisplay();
+        
+        if (casts <= 0) {
+          setTimeout(() => gameOver(), 1000);
+        }
+      }
+    }
+  }
+  
+  // Update fish
+  for (let i = fishes.length - 1; i >= 0; i--) {
+    const fish = fishes[i];
+    if (fish.caught) continue;
+    
+    fish.x += fish.speed * fish.direction * dt * 60;
+    fish.wobble += dt * 3;
+    fish.y += Math.sin(fish.wobble) * 0.5;
+    
+    // Remove if off screen
+    if ((fish.direction > 0 && fish.x > W + 100) || (fish.direction < 0 && fish.x < -100)) {
+      fishes.splice(i, 1);
+    }
+  }
+  
+  // Spawn new fish
+  if (fishes.length < 15 && Math.random() < 0.02) {
+    spawnFish();
+  }
+  
+  // Update bubbles
+  for (let i = bubbles.length - 1; i >= 0; i--) {
+    const b = bubbles[i];
+    b.y -= b.speed * dt * 60;
+    b.life -= dt * 0.5;
+    if (b.life <= 0 || b.y < 0) {
+      bubbles.splice(i, 1);
+    }
+  }
+  
+  // Update particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * dt * 60;
+    p.y += p.vy * dt * 60;
+    p.life -= dt;
+    if (p.life <= 0) {
+      particles.splice(i, 1);
+    }
+  }
+}
+
+function createCatchParticles(x, y, fishType) {
+  for (let i = 0; i < 20; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 5,
+      vy: (Math.random() - 0.5) * 5,
+      life: 1,
+      color: fishType.color,
+      size: 3 + Math.random() * 5
+    });
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  
+  // Sky
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, H * 0.2);
+  skyGrad.addColorStop(0, '#87ceeb');
+  skyGrad.addColorStop(1, '#4a90e2');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, H * 0.2);
+  
+  // Water
+  const waterGrad = ctx.createLinearGradient(0, H * 0.15, 0, H);
+  waterGrad.addColorStop(0, '#4a90e2');
+  waterGrad.addColorStop(0.3, '#1e3a5f');
+  waterGrad.addColorStop(1, '#0a1628');
+  ctx.fillStyle = waterGrad;
+  ctx.fillRect(0, H * 0.15, W, H * 0.85);
+  
+  // Water surface waves
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let x = 0; x < W; x += 5) {
+    const y = H * 0.15 + Math.sin(x * 0.02 + gameTime * 2) * 3;
+    if (x === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  
+  // Boat
+  const boatX = W / 2;
+  const boatY = H * 0.12;
+  ctx.fillStyle = '#8b4513';
+  ctx.beginPath();
+  ctx.moveTo(boatX - 40, boatY);
+  ctx.lineTo(boatX + 40, boatY);
+  ctx.lineTo(boatX + 35, boatY + 20);
+  ctx.lineTo(boatX - 35, boatY + 20);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#654321';
+  ctx.fillRect(boatX - 30, boatY - 15, 60, 15);
+  
+  // Fishing rod
+  ctx.strokeStyle = '#654321';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(boatX, boatY - 15);
+  ctx.lineTo(boatX + 50, boatY - 40);
+  ctx.stroke();
+  
+  // Fishing line
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(boatX + 50, boatY - 40);
+  ctx.lineTo(hook.x, hook.y);
+  ctx.stroke();
+  
+  // Hook
+  ctx.fillStyle = '#c0c0c0';
+  ctx.beginPath();
+  ctx.arc(hook.x, hook.y, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#808080';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(hook.x, hook.y + 5, 6, 0, Math.PI);
+  ctx.stroke();
+  
+  // Caught fish
+  if (hook.caughtFish) {
+    ctx.font = `${hook.caughtFish.type.size}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(hook.caughtFish.type.icon, hook.x, hook.y - 15);
+  }
+  
+  // Fish
+  for (const fish of fishes) {
+    if (fish.caught) continue;
+    ctx.save();
+    ctx.translate(fish.x, fish.y);
+    if (fish.direction < 0) ctx.scale(-1, 1);
+    ctx.font = `${fish.type.size}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(fish.type.icon, 0, 0);
+    ctx.restore();
+  }
+  
+  // Bubbles
+  for (const b of bubbles) {
+    ctx.fillStyle = `rgba(255,255,255,${b.life * 0.5})`;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Particles
+  for (const p of particles) {
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = p.life;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  
+  // Seaweed
+  for (const s of seaweed) {
+    ctx.strokeStyle = '#2d5016';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(s.x, H);
+    const sway = Math.sin(gameTime * 2 + s.phase) * 10;
+    ctx.quadraticCurveTo(s.x + sway, H - s.height / 2, s.x + sway * 1.5, H - s.height);
+    ctx.stroke();
+  }
+  
+  // Depth indicator
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = '12px Inter';
+  ctx.textAlign = 'left';
+  ctx.fillText('Deep', 10, H - 10);
+  ctx.fillText('Shallow', 10, H * 0.2);
+}
+
+function gameLoop(timestamp) {
+  const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+  lastTime = timestamp;
+  
+  update(dt);
+  draw();
+  
+  requestAnimationFrame(gameLoop);
+}
+
+function dropHook() {
+  if (hook.state !== 'idle' || casts <= 0) return;
+  sound.init();
+  sound.resume();
+  sound.splash();
+  hook.state = 'dropping';
+  hook.speed = 2;
+  setMessage('Hook dropping...');
+}
+
+function gameOver() {
+  sound.gameOver();
+  setMessage(`Game Over! Total: $${money} | Caught: ${caught}`, true);
+  document.getElementById('dropBtn').disabled = true;
+}
+
+function updateDisplay() {
+  document.getElementById('money').textContent = '$' + money;
+  document.getElementById('casts').textContent = casts;
+  document.getElementById('caught').textContent = caught;
+}
+
+function setMessage(text, bigWin = false) {
+  const el = document.getElementById('message');
+  el.textContent = text;
+  el.classList.toggle('big-win', bigWin);
+}
+
+// Controls
+document.getElementById('dropBtn').addEventListener('click', dropHook);
+document.getElementById('resetBtn').addEventListener('click', () => {
+  money = 0;
+  casts = 10;
+  caught = 0;
+  hook.state = 'idle';
+  hook.caughtFish = null;
+  document.getElementById('dropBtn').disabled = false;
+  setMessage('New game! Drop your hook!');
+  updateDisplay();
+  initGame();
+});
+
+document.getElementById('soundToggle').addEventListener('click', () => {
+  sound.init();
+  sound.resume();
+  sound.setMuted(!sound.muted);
+  document.getElementById('soundToggle').textContent = sound.muted ? '🔇' : '🔊';
+  document.getElementById('soundToggle').classList.toggle('muted', sound.muted);
+});
+
+// Keyboard
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') {
+    e.preventDefault();
+    dropHook();
+  }
+  if (e.code === 'ArrowLeft') {
+    hook.x = Math.max(20, hook.x - 20);
+  }
+  if (e.code === 'ArrowRight') {
+    hook.x = Math.min(W - 20, hook.x + 20);
+  }
+});
+
+// Mouse/Touch
+canvas.addEventListener('mousemove', e => {
+  if (hook.state === 'idle') {
+    const rect = canvas.getBoundingClientRect();
+    hook.x = e.clientX - rect.left;
+  }
+});
+
+canvas.addEventListener('click', dropHook);
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (hook.state === 'idle') {
+    const rect = canvas.getBoundingClientRect();
+    hook.x = e.touches[0].clientX - rect.left;
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  hook.x = e.touches[0].clientX - rect.left;
+  dropHook();
+}, { passive: false });
+
+// Resize
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    resizeCanvas();
+    hook.y = H * 0.15;
+  }, 200);
+});
+
+// Init
+initGame();
+lastTime = performance.now();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
