@@ -155,7 +155,7 @@ game/
     ├── fruit.html
     ├── game.html
     └── rulet.html
-~~~
+```
 
 ## 📱 Responsive Design
 
