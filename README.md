@@ -224,8 +224,4 @@ Every contribution helps the project grow.
 
 This project is licensed under the MIT License.
  
-**Live game collection:** :contentReference[oaicite:4]{index=4}
-
-**Repository:** :contentReference[oaicite:5]{index=5}
-
-The screenshots above are actual assets already present in the repository, so the relative `img/01.png`–style references in the README will work directly when the README is placed at the repository root. :contentReference[oaicite:6]{index=6}
+ 
