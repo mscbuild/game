@@ -161,11 +161,11 @@ game/
 
 The project is designed to work across different screen sizes.
 
-Desktop
+- Desktop
 
 Enjoy the games using a full-size browser window and keyboard/mouse controls where supported.
 
-Mobile
+- Mobile
 
 Open the project from a mobile browser and interact with games using touch controls where available.
 
