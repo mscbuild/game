@@ -220,21 +220,10 @@ If you enjoy the games or find the project useful:
 
 Every contribution helps the project grow.
 
+## 📄 License
 
-### A couple of important improvements
-
-I would make **one correction to the current repository presentation**: the existing GitHub description says “Play game online now on mobile or desktop,” but the repository is actually a **mini-game hub containing multiple games**. The source currently labels the section “Mini Games” and lists the games individually. :contentReference[oaicite:2]{index=2}
-
-I would therefore change the GitHub repository short description to:
-
-> **🎮 A collection of lightweight browser-based mini games — play online on desktop or mobile.**
-
-And your GitHub Topics could be:
-
-`games` · `game-development` · `html5` · `javascript` · `css3` · `browser-games` · `mini-games` · `web-games` · `gaming` · `github-pages`
-
-The repository already uses topics such as `game-development`, `games`, `gaming`, `play`, and `website`. :contentReference[oaicite:3]{index=3}
-
+This project is licensed under the MIT License.
+ 
 **Live game collection:** :contentReference[oaicite:4]{index=4}
 
 **Repository:** :contentReference[oaicite:5]{index=5}
