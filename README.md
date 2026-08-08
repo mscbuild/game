@@ -70,7 +70,8 @@ A classic one-armed-bandit style slot experience with colorful fruit symbols.
 | 📖 Bible Quiz | Test your Bible knowledge | `web/bible.html` |
 | 🧊 Cube | Fast-paced cube game | External / embedded project |
 | 🏎️ Street Racer | Arcade-style racing game | `web/car.html` |
-| 🫧 Bubble Shooter | Match and shoot bubbles | `web/bubl.html` |
+| 🎱 Bubble Shooter | Match and shoot bubbles | `web/bubl.html` |
+| *ੈ🎡‧₊˚ Arcade Center 2 | Arcade-style  game | `web/gam.html` |
 
 ---
 
@@ -153,6 +154,7 @@ game/
     ├── car.html
     ├── fish.html
     ├── fruit.html
+    ├── gam.html
     ├── game.html
     └── rulet.html
 ```
